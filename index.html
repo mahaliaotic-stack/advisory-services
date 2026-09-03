@@ -16,19 +16,14 @@
   body{
     background:var(--bg); color:var(--ink);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    font-size:15px; line-height:1.5; -webkit-font-smoothing:antialiased;
-    padding:40px 20px 80px;
+    font-size:15px; line-height:1.5; -webkit-font-smoothing:antialiased; padding:40px 20px 80px;
   }
   .wrap{max-width:760px;margin:0 auto;}
-
   header.masthead{margin-bottom:28px;border-bottom:1px solid var(--line);padding-bottom:20px;}
   h1{font-size:24px;font-weight:700;letter-spacing:-.01em;margin:0 0 6px;}
   .subtitle{font-size:14px;color:var(--muted);margin:0;letter-spacing:.01em;}
 
-  .card{
-    background:var(--panel);border:1px solid var(--line);border-radius:10px;
-    box-shadow:var(--shadow);padding:26px 26px 28px;margin-bottom:20px;
-  }
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:26px 26px 28px;margin-bottom:20px;}
   .field{margin-bottom:20px;}
   .field:last-child{margin-bottom:0;}
   label.lbl{display:block;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2);margin-bottom:8px;}
@@ -44,13 +39,9 @@
     background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%23555' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
     background-repeat:no-repeat;background-position:right 13px center;padding-right:34px;
   }
-  .hint{font-size:12px;color:var(--muted);margin-top:6px;min-height:0;}
+  .hint{font-size:12px;color:var(--muted);margin-top:6px;}
 
-  .drop{
-    border:1.5px dashed var(--line-strong);border-radius:9px;background:var(--field);
-    padding:26px 20px;text-align:center;cursor:pointer;
-    transition:border-color .12s ease, background .12s ease;
-  }
+  .drop{border:1.5px dashed var(--line-strong);border-radius:9px;background:var(--field);padding:26px 20px;text-align:center;cursor:pointer;transition:border-color .12s ease, background .12s ease;}
   .drop:hover{border-color:var(--ink-2);}
   .drop.dragging{border-color:var(--ink);background:#f0f0f0;}
   .drop .icon{font-size:22px;line-height:1;color:var(--ink-2);margin-bottom:8px;}
@@ -58,20 +49,20 @@
   .drop .small{font-size:12px;color:var(--muted);margin-top:4px;}
   .drop input[type=file]{display:none;}
 
-  .filechip{
-    display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;
-    padding:10px 12px;border:1px solid var(--line);border-radius:7px;background:#fff;font-size:13px;
-  }
-  .filechip .name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .filechip .meta{color:var(--muted);font-size:12px;}
-  .linkbtn{background:none;border:none;color:var(--ink);cursor:pointer;font-size:12px;text-decoration:underline;padding:0;}
+  /* per-file model cards */
+  .filelist{margin-top:14px;display:flex;flex-direction:column;gap:12px;}
+  .fileitem{border:1px solid var(--line);border-radius:8px;background:#fff;padding:14px 14px 16px;}
+  .fileitem.bad{background:#fbfbfb;border-color:#8f8f8f;}
+  .fileitem-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;}
+  .fileitem-head .fname{font-size:12px;color:var(--muted);font-family:ui-monospace,Menlo,monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .mini-lbl{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-2);margin:0 0 5px;}
+  .model-input{width:100%;background:var(--field);border:1px solid var(--line-strong);border-radius:6px;padding:8px 11px;font-size:14px;color:var(--ink);}
+  .model-input:focus{outline:none;border-color:var(--ink);background:#fff;}
+  .model-input.dupe{border-color:#000;background:#f0f0f0;}
+  .linkbtn{background:none;border:none;color:var(--ink);cursor:pointer;font-size:12px;text-decoration:underline;padding:0;flex:0 0 auto;}
 
-  .results{margin-top:16px;}
-  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
-  .chip{
-    display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;
-    border:1px solid var(--line-strong);border-radius:999px;padding:5px 12px;background:var(--ok-bg);color:var(--ink);
-  }
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 0;}
+  .chip{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;border:1px solid var(--line-strong);border-radius:999px;padding:4px 11px;background:var(--ok-bg);color:var(--ink);}
   .chip .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;}
   .chip.ok .dot{background:#1c1c1c;}
   .chip.warn{background:var(--warn-bg);border-style:dashed;}
@@ -79,30 +70,18 @@
   .chip.err{background:var(--err-bg);border-color:#8f8f8f;}
   .chip.err .dot{background:#000;box-shadow:0 0 0 2px #fff inset;border:1px solid #000;}
 
-  .msgs{list-style:none;margin:0;padding:0;font-size:13px;}
-  .msgs li{padding:7px 0;border-top:1px solid var(--line);display:flex;gap:9px;align-items:flex-start;}
-  .msgs li:first-child{border-top:none;}
-  .msgs .mark{font-weight:700;flex:0 0 16px;text-align:center;}
-  .msgs .m-ok .mark{color:#111;}
+  .msgs{list-style:none;margin:8px 0 0;padding:0;font-size:12.5px;}
+  .msgs li{padding:5px 0;display:flex;gap:8px;align-items:flex-start;}
+  .msgs .mark{font-weight:700;flex:0 0 14px;text-align:center;}
   .msgs .m-warn .mark{color:#666;}
   .msgs .m-err .mark{color:#000;}
-  .msgs .m-err{color:#111;font-weight:500;}
+  .domains{font-size:12px;color:var(--ink-2);margin-top:9px;word-break:break-word;}
+  .domains b{font-weight:600;color:var(--ink);text-transform:uppercase;letter-spacing:.04em;font-size:11px;}
 
-  .previewwrap{margin-top:14px;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
-  .previewhead{font-size:12px;font-weight:600;color:var(--ink-2);padding:9px 12px;background:#f7f7f7;border-bottom:1px solid var(--line);}
-  table{width:100%;border-collapse:collapse;font-size:12.5px;}
-  th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
-  th{background:#fbfbfb;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;font-size:11px;}
-  tr:last-child td{border-bottom:none;}
-  td.url{max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;}
-  .morerows{font-size:12px;color:var(--muted);padding:8px 12px;background:#fbfbfb;}
+  .batchnote{font-size:12.5px;color:#000;font-weight:600;margin-top:14px;min-height:1em;}
 
   .actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:4px;}
-  button.submit{
-    appearance:none;border:1px solid var(--ink);background:var(--ink);color:#fff;
-    font-size:14px;font-weight:600;padding:12px 22px;border-radius:8px;cursor:pointer;
-    transition:opacity .12s ease, background .12s ease;
-  }
+  button.submit{appearance:none;border:1px solid var(--ink);background:var(--ink);color:#fff;font-size:14px;font-weight:600;padding:12px 22px;border-radius:8px;cursor:pointer;transition:opacity .12s ease, background .12s ease;}
   button.submit:hover{background:#000;}
   button.submit:disabled{background:#c9c9c9;border-color:#c9c9c9;color:#fff;cursor:not-allowed;}
   .status{font-size:13px;color:var(--muted);}
@@ -135,20 +114,26 @@
     </div>
 
     <div class="field">
-      <label class="lbl" for="modelName">Model Name <span class="req">*</span></label>
-      <input type="text" id="modelName" placeholder="e.g. Q3 Ionic Migration — Product Pages" autocomplete="off" />
+      <label class="lbl" for="requestType">Request <span class="req">*</span></label>
+      <select id="requestType">
+        <option value="" disabled selected>Select a request type…</option>
+        <option value="Migrate">Migrate</option>
+        <option value="New">New</option>
+        <option value="Remove">Remove</option>
+      </select>
     </div>
 
     <div class="field">
-      <label class="lbl">Spike Data File (CSV) <span class="req">*</span></label>
+      <label class="lbl">Model Files (CSV) <span class="req">*</span></label>
       <div class="drop" id="drop">
         <div class="icon">⇪</div>
-        <div class="big">Drop CSV here or click to browse</div>
-        <div class="small">Expected columns: Page URL, Type, Added On Date</div>
-        <input type="file" id="fileInput" accept=".csv,text/csv" />
+        <div class="big">Drop CSV files here or click to browse</div>
+        <div class="small">One model per file · you can add several at once</div>
+        <div class="small">Expected columns: Page URL, Type, Added On Date (Optional)</div>
+        <input type="file" id="fileInput" accept=".csv,text/csv" multiple />
       </div>
-      <div id="fileChip"></div>
-      <div class="results" id="results" style="display:none;"></div>
+      <div class="filelist" id="fileList"></div>
+      <div class="batchnote" id="batchNote"></div>
     </div>
 
   </div>
@@ -169,10 +154,9 @@
   // ═══════════════════════════════════════════════════════════════════
   //  If the Apps Script is ever redeployed to a NEW url, update this line
   //  and re-upload the file. Nothing else here needs to change.
-  var WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyqffqL4O4A9eCawb0Q6eFQuZlAHUcGabyAbbwy2snizI6D2OcY5v8xV-iqySwlEQE9Nw/exec";
+  var WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwEaTwpycpy1-82qpfmbwOJQo5NBMXteut8ftdwe-serxvB0CSXeEuBMjUUDsyPY-P6Vw/exec";
   // ═══════════════════════════════════════════════════════════════════
 
-  // Built-in list used only if the sheet can't be reached
   var DEFAULT_ACCOUNTS = [
     "Rhapsody","Alteryx","CAH - Distro","CAH - Pharma","CAH - Wavemark",
     "Carelon","Customer Zero","Data Intensity Inc.","Datto/Kaseya","DNA Technologies",
@@ -182,9 +166,9 @@
   ];
 
   var $ = function(id){ return document.getElementById(id); };
-  var accountSel = $("accountName"), modelInput = $("modelName");
-  var fileInput = $("fileInput"), drop = $("drop"), fileChip = $("fileChip");
-  var results = $("results"), submitBtn = $("submitBtn"), statusEl = $("status");
+  var accountSel = $("accountName"), requestSel = $("requestType");
+  var fileInput = $("fileInput"), drop = $("drop"), fileList = $("fileList");
+  var batchNote = $("batchNote"), submitBtn = $("submitBtn"), statusEl = $("status");
   var acctSource = $("acctSource");
 
   function lsGet(k){ try{ return window.localStorage.getItem(k); }catch(e){ return null; } }
@@ -196,7 +180,8 @@
   }
 
   var ACCOUNTS = readCache() || DEFAULT_ACCOUNTS.slice();
-  var parsed = null;
+  var models = [];   // { id, file, name, modelName, rows:[{url,type}], bad:[], domains:[], rawText, status }
+  var seq = 0;
 
   function populateAccounts(){
     var current = accountSel.value;
@@ -209,17 +194,14 @@
   }
   populateAccounts();
 
-  // ── Load live account list from the sheet (JSONP; silent fallback) ───
-  function setAcctNote(text){ acctSource.textContent = text || ""; }
+  // ── Live account list (JSONP; silent fallback) ───────────────────────
   (function loadAccounts(){
     if (!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec/.test(WEBAPP_URL)) return;
     var cbName = "__esiAccts_" + Date.now();
     var script = document.createElement("script");
     var done = false;
     function cleanup(){ try{ delete window[cbName]; }catch(e){ window[cbName]=undefined; } if (script.parentNode) script.parentNode.removeChild(script); }
-    function fail(){ if (done) return; done = true; clearTimeout(timer); cleanup();
-      setAcctNote(readCache() ? "" : ""); // stay silent; built-in list already shown
-    }
+    function fail(){ if (done) return; done = true; clearTimeout(timer); cleanup(); }
     var timer = setTimeout(fail, 9000);
     window[cbName] = function(resp){
       if (done) return; done = true; clearTimeout(timer); cleanup();
@@ -227,7 +209,7 @@
       if (Array.isArray(list) && list.length){
         ACCOUNTS = list.map(function(s){ return String(s).trim(); }).filter(Boolean);
         lsSet("esi_accounts_cache", JSON.stringify(ACCOUNTS));
-        populateAccounts(); refreshSubmit(); setAcctNote("");
+        populateAccounts(); refreshSubmit();
       }
     };
     script.onerror = fail;
@@ -235,7 +217,7 @@
     document.head.appendChild(script);
   })();
 
-  // ── CSV parser ───────────────────────────────────────────────────────
+  // ── CSV parsing / validation ─────────────────────────────────────────
   function parseCSV(text){
     var rows = [], row = [], cur = "", i = 0, inQ = false, c;
     if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
@@ -263,120 +245,181 @@
     if (/^[\w.-]+\.[a-z]{2,}(\/\S*)?$/i.test(v)) return true;
     return false;
   }
+  function extractDomain(u){
+    u = String(u || "").trim();
+    if (!u || u.charAt(0) === '/') return null;    // root-relative path → no domain
+    var s = u.replace(/^https?:\/\//i,"").replace(/^www\./i,"");
+    var host = s.split(/[\/?#]/)[0];
+    if (!host || host.indexOf(".") === -1) return null;
+    return host.toLowerCase();
+  }
+  function stripExt(name){ return String(name || "").replace(/\.[^.\/\\]+$/,"").trim(); }
 
-  function handleFile(file){
-    resetResults();
-    if (!file) return;
-    var nameOk = /\.csv$/i.test(file.name);
-    var reader = new FileReader();
-    reader.onload = function(e){
-      var grid = parseCSV(e.target.result);
-      var out = { validRows:[], badRows:[], total:0, headerOk:false, urlCol:-1, typeCol:-1,
-                  fileName:file.name, extOk:nameOk, empty:false };
-      if (!grid.length){ out.empty = true; parsed = null; renderResults(out); return; }
-      var header = grid[0].map(normalize);
-      var urlAliases  = ["page url","url","page","page_url","pageurl"];
-      var typeAliases = ["type","page type","page_type","pagetype"];
-      out.urlCol  = header.findIndex(function(h){ return urlAliases.indexOf(h) !== -1; });
-      out.typeCol = header.findIndex(function(h){ return typeAliases.indexOf(h) !== -1; });
-      out.headerOk = (out.urlCol !== -1 && out.typeCol !== -1);
-      if (out.headerOk){
-        for (var r = 1; r < grid.length; r++){
-          var line = grid[r]; out.total++;
-          var url = (line[out.urlCol] || "").trim();
-          var type = (line[out.typeCol] || "").trim();
-          var reason = null;
-          if (!url && !type) reason = "empty row";
-          else if (!url) reason = "missing Page URL";
-          else if (!type) reason = "missing Type";
-          else if (!looksLikeUrl(url)) reason = "Page URL doesn't look valid";
-          if (reason) out.badRows.push({ n:r+1, reason:reason });
-          else out.validRows.push({ url:url, page_type:type });
-        }
+  function parseEntry(entry){
+    var grid = parseCSV(entry.rawText || "");
+    entry.rows = []; entry.bad = []; entry.domains = [];
+    if (!grid.length){ entry.status = "empty"; return; }
+    var header = grid[0].map(normalize);
+    var urlAliases  = ["page url","url","page","page_url","pageurl"];
+    var typeAliases = ["type","page type","page_type","pagetype"];
+    var urlCol  = header.findIndex(function(h){ return urlAliases.indexOf(h) !== -1; });
+    var typeCol = header.findIndex(function(h){ return typeAliases.indexOf(h) !== -1; });
+    if (urlCol === -1 || typeCol === -1){
+      entry.status = "noheader";
+      entry.missing = [];
+      if (urlCol === -1) entry.missing.push("Page URL");
+      if (typeCol === -1) entry.missing.push("Type");
+      return;
+    }
+    var seen = {};
+    for (var r = 1; r < grid.length; r++){
+      var line = grid[r];
+      var url = (line[urlCol] || "").trim();
+      var type = (line[typeCol] || "").trim();
+      var reason = null;
+      if (!url && !type) reason = "empty row";
+      else if (!url) reason = "missing Page URL";
+      else if (!type) reason = "missing Type";
+      else if (!looksLikeUrl(url)) reason = "Page URL doesn't look valid";
+      if (reason){ entry.bad.push({ n:r+1, reason:reason }); continue; }
+      entry.rows.push({ url:url, type:type });
+      var d = extractDomain(url);
+      if (d && !seen[d]){ seen[d] = 1; entry.domains.push(d); }
+    }
+    entry.status = entry.rows.length ? "ok" : "norows";
+  }
+
+  // ── File intake ──────────────────────────────────────────────────────
+  function addFiles(list){
+    Array.prototype.forEach.call(list, function(file){
+      if (!file) return;
+      var entry = { id: ++seq, file:file, name:file.name, modelName: stripExt(file.name),
+                    rows:[], bad:[], domains:[], rawText:"", status:"reading",
+                    extOk:/\.csv$/i.test(file.name) };
+      models.push(entry);
+      var reader = new FileReader();
+      reader.onload = function(e){ entry.rawText = e.target.result; parseEntry(entry); renderList(); refreshSubmit(); };
+      reader.onerror = function(){ entry.status = "readerror"; renderList(); refreshSubmit(); };
+      reader.readAsText(file);
+    });
+    renderList(); refreshSubmit();
+  }
+
+  function submittable(){ return models.filter(function(m){ return m.status === "ok" && m.modelName; }); }
+  function dupeNames(){
+    var names = submittable().map(function(m){ return m.modelName.toLowerCase(); });
+    var d = {};
+    names.forEach(function(n,i){ if (names.indexOf(n) !== i) d[n] = 1; });
+    return d;
+  }
+
+  function renderList(){
+    var dupes = dupeNames();
+    fileList.innerHTML = models.map(function(m){
+      var chips = [], msgs = "";
+      if (m.status === "reading") chips.push(chip("warn","reading…"));
+      else if (m.status === "readerror") chips.push(chip("err","could not read file"));
+      else if (m.status === "empty") chips.push(chip("err","file is empty"));
+      else if (m.status === "noheader") chips.push(chip("err","missing " + (m.missing||[]).join(" and ")));
+      else if (m.status === "norows") chips.push(chip("err","0 valid rows"));
+      else {
+        chips.push(chip("ok", m.rows.length + " valid row" + (m.rows.length===1?"":"s")));
+        if (m.bad.length) chips.push(chip("warn", m.bad.length + " skipped"));
+        chips.push(chip("ok", m.domains.length + " domain" + (m.domains.length===1?"":"s")));
       }
-      parsed = out.headerOk && out.validRows.length ? out : null;
-      renderResults(out);
-    };
-    reader.onerror = function(){ renderResults({ readError:true }); parsed = null; };
-    reader.readAsText(file);
+      if (!m.extOk) chips.push(chip("warn","not .csv"));
 
-    fileChip.innerHTML =
-      '<div class="filechip"><div><div class="name">'+escapeHtml(file.name)+'</div>'+
-      '<div class="meta">'+fmtBytes(file.size)+'</div></div>'+
-      '<button class="linkbtn" id="clearFile">remove</button></div>';
-    $("clearFile").addEventListener("click", function(ev){
-      ev.stopPropagation(); fileInput.value = ""; fileChip.innerHTML = "";
-      resetResults(); parsed = null; refreshSubmit();
+      if (m.bad && m.bad.length){
+        var items = m.bad.slice(0,4).map(function(b){ return "<li class='m-warn'><span class='mark'>!</span><span>Row "+b.n+": "+escapeHtml(b.reason)+".</span></li>"; }).join("");
+        if (m.bad.length > 4) items += "<li class='m-warn'><span class='mark'>!</span><span>…and "+(m.bad.length-4)+" more.</span></li>";
+        msgs = "<ul class='msgs'>"+items+"</ul>";
+      }
+
+      var domainsHtml = (m.status === "ok" && m.domains.length)
+        ? "<div class='domains'><b>Domains:</b> " + escapeHtml(m.domains.join(", ")) + "</div>" : "";
+
+      var isDupe = dupes[(m.modelName||"").toLowerCase()] ? " dupe" : "";
+      var bad = (m.status === "ok") ? "" : " bad";
+
+      return "<div class='fileitem"+bad+"'>"+
+        "<div class='fileitem-head'><span class='fname'>"+escapeHtml(m.name)+"</span>"+
+        "<button class='linkbtn removeone' data-id='"+m.id+"'>remove</button></div>"+
+        "<label class='mini-lbl'>Model name</label>"+
+        "<input class='model-input"+isDupe+"' data-id='"+m.id+"' value='"+escapeHtml(m.modelName)+"' placeholder='Model name' />"+
+        "<div class='chips'>"+chips.join("")+"</div>"+ msgs + domainsHtml +
+      "</div>";
+    }).join("");
+  }
+  function chip(kind,label){ return "<span class='chip "+kind+"'><span class='dot'></span>"+escapeHtml(label)+"</span>"; }
+
+  // update model name inline without re-rendering (keeps input focus)
+  fileList.addEventListener("input", function(e){
+    var t = e.target;
+    if (t && t.classList.contains("model-input")){
+      var id = +t.getAttribute("data-id");
+      var entry = models.filter(function(m){ return m.id === id; })[0];
+      if (entry){ entry.modelName = t.value.trim(); refreshSubmit(); markDupes(); }
+    }
+  });
+  fileList.addEventListener("click", function(e){
+    var t = e.target;
+    if (t && t.classList.contains("removeone")){
+      var id = +t.getAttribute("data-id");
+      models = models.filter(function(m){ return m.id !== id; });
+      renderList(); refreshSubmit();
+    }
+  });
+  function markDupes(){
+    var dupes = dupeNames();
+    Array.prototype.forEach.call(fileList.querySelectorAll(".model-input"), function(inp){
+      var id = +inp.getAttribute("data-id");
+      var entry = models.filter(function(m){ return m.id === id; })[0];
+      var isDupe = entry && dupes[(entry.modelName||"").toLowerCase()];
+      inp.classList.toggle("dupe", !!isDupe);
     });
   }
 
-  function renderResults(out){
-    results.style.display = "block";
-    var chips = [], msgs = [];
-    if (out.readError){
-      chips.push(chip("err","Could not read file"));
-      msgs.push(msg("err","✕","Browser could not read this file. Try re-exporting the CSV."));
-      results.innerHTML = wrap(chips, msgs, ""); refreshSubmit(); return;
-    }
-    if (out.extOk) chips.push(chip("ok","CSV file"));
-    else { chips.push(chip("warn","Not a .csv extension")); msgs.push(msg("warn","!","File isn't named .csv — parsed anyway, but verify the format.")); }
-    if (out.empty){
-      chips.push(chip("err","File is empty")); msgs.push(msg("err","✕","No rows found in the file."));
-      results.innerHTML = wrap(chips, msgs, ""); refreshSubmit(); return;
-    }
-    if (out.headerOk){
-      chips.push(chip("ok","Headers detected"));
-      msgs.push(msg("ok","✓","Found required columns: Page URL and Type. (Added On Date is ignored.)"));
-    } else {
-      chips.push(chip("err","Missing required columns"));
-      var need = [];
-      if (out.urlCol === -1) need.push("Page URL");
-      if (out.typeCol === -1) need.push("Type");
-      msgs.push(msg("err","✕","Couldn't find column(s): "+need.join(" and ")+". Check the header row."));
-      results.innerHTML = wrap(chips, msgs, ""); refreshSubmit(); return;
-    }
-    chips.push(chip(out.validRows.length ? "ok" : "err", out.validRows.length+" valid row"+(out.validRows.length===1?"":"s")));
-    if (out.badRows.length) chips.push(chip("warn", out.badRows.length+" skipped"));
-    if (out.validRows.length) msgs.push(msg("ok","✓", out.validRows.length+" row"+(out.validRows.length===1?"":"s")+" ready to submit."));
-    else msgs.push(msg("err","✕","No valid rows to submit."));
-    out.badRows.slice(0,6).forEach(function(b){ msgs.push(msg("warn","!","Row "+b.n+": "+b.reason+".")); });
-    if (out.badRows.length > 6) msgs.push(msg("warn","!","…and "+(out.badRows.length-6)+" more skipped row"+((out.badRows.length-6)===1?"":"s")+"."));
-
-    var preview = "", show = out.validRows.slice(0,8);
-    if (show.length){
-      var body = show.map(function(r){ return "<tr><td class='url'>"+escapeHtml(r.url)+"</td><td>"+escapeHtml(r.page_type)+"</td></tr>"; }).join("");
-      var more = out.validRows.length > 8 ? "<div class='morerows'>+ "+(out.validRows.length-8)+" more valid row"+((out.validRows.length-8)===1?"":"s")+"</div>" : "";
-      preview = "<div class='previewwrap'><div class='previewhead'>Preview — url → page_type</div>"+
-                "<table><thead><tr><th>url</th><th>page_type</th></tr></thead><tbody>"+body+"</tbody></table>"+more+"</div>";
-    }
-    results.innerHTML = wrap(chips, msgs, preview);
-    refreshSubmit();
-  }
-  function wrap(chips, msgs, preview){ return "<div class='chips'>"+chips.join("")+"</div><ul class='msgs'>"+msgs.join("")+"</ul>"+preview; }
-  function chip(kind,label){ return "<span class='chip "+kind+"'><span class='dot'></span>"+escapeHtml(label)+"</span>"; }
-  function msg(kind,mark,text){ return "<li class='m-"+kind+"'><span class='mark'>"+mark+"</span><span>"+escapeHtml(text)+"</span></li>"; }
-  function resetResults(){ results.style.display = "none"; results.innerHTML = ""; }
-
   function refreshSubmit(){
-    submitBtn.disabled = !(accountSel.value && modelInput.value.trim() && parsed && parsed.validRows.length);
+    var sub = submittable();
+    var dupes = dupeNames();
+    var hasDupe = Object.keys(dupes).length > 0;
+    var allNamed = sub.every(function(m){ return m.modelName; });
+    var ok = accountSel.value && requestSel.value && sub.length > 0 && allNamed && !hasDupe;
+    submitBtn.disabled = !ok;
+
+    var notes = [];
+    if (models.length && sub.length === 0) notes.push("No files with valid rows yet.");
+    if (hasDupe) notes.push("Two or more files share the same Model name — rename so each is unique.");
+    if (sub.length && !accountSel.value) notes.push("Select an Account Name.");
+    if (sub.length && !requestSel.value) notes.push("Select a Request type.");
+    batchNote.textContent = notes.join(" ");
   }
   accountSel.addEventListener("change", refreshSubmit);
-  modelInput.addEventListener("input", refreshSubmit);
+  requestSel.addEventListener("change", refreshSubmit);
 
   drop.addEventListener("click", function(){ fileInput.click(); });
-  fileInput.addEventListener("change", function(e){ handleFile(e.target.files[0]); });
+  fileInput.addEventListener("change", function(e){ addFiles(e.target.files); fileInput.value = ""; });
   ["dragenter","dragover"].forEach(function(ev){ drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.add("dragging"); }); });
   ["dragleave","drop"].forEach(function(ev){ drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.remove("dragging"); }); });
-  drop.addEventListener("drop", function(e){ var f = e.dataTransfer.files && e.dataTransfer.files[0]; if (f){ fileInput.files = e.dataTransfer.files; handleFile(f); } });
+  drop.addEventListener("drop", function(e){ if (e.dataTransfer.files && e.dataTransfer.files.length) addFiles(e.dataTransfer.files); });
 
+  // ── Submit ───────────────────────────────────────────────────────────
   submitBtn.addEventListener("click", function(){
-    var payload = { account_name: accountSel.value, model_name: modelInput.value.trim(), rows: parsed.validRows };
+    var sub = submittable();
+    var totalRows = sub.reduce(function(s,m){ return s + m.rows.length; }, 0);
+    var payload = {
+      account_name: accountSel.value,
+      request: requestSel.value,
+      models: sub.map(function(m){
+        return { model_name: m.modelName, rows: m.rows, domains: m.domains, raw_csv: m.rawText };
+      })
+    };
     submitBtn.disabled = true;
-    setStatus("sending", "<span class='spinner'></span>Sending "+parsed.validRows.length+" row"+(parsed.validRows.length===1?"":"s")+"…");
+    setStatus("sending", "<span class='spinner'></span>Sending "+sub.length+" model"+(sub.length===1?"":"s")+" ("+totalRows+" row"+(totalRows===1?"":"s")+")…");
     fetch(WEBAPP_URL, { method:"POST", mode:"no-cors", headers:{ "Content-Type":"text/plain;charset=utf-8" }, body: JSON.stringify(payload) })
       .then(function(){
-        setStatus("done", "✓ Submitted "+parsed.validRows.length+" row"+(parsed.validRows.length===1?"":"s")+". Thank you!");
-        modelInput.value = ""; fileInput.value = ""; fileChip.innerHTML = ""; resetResults(); parsed = null; refreshSubmit();
+        setStatus("done", "✓ Submitted "+sub.length+" model"+(sub.length===1?"":"s")+" ("+totalRows+" row"+(totalRows===1?"":"s")+"). Thank you!");
+        models = []; fileInput.value = ""; renderList(); requestSel.selectedIndex = 0; refreshSubmit();
       })
       .catch(function(){
         setStatus("fail", "✕ Couldn't reach the tracker. Check your connection and try again.");
@@ -386,7 +429,6 @@
   function setStatus(kind, html){ statusEl.className = "status " + kind; statusEl.innerHTML = html; }
 
   function escapeHtml(s){ return String(s).replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]; }); }
-  function fmtBytes(b){ if (b < 1024) return b+" B"; if (b < 1048576) return (b/1024).toFixed(1)+" KB"; return (b/1048576).toFixed(1)+" MB"; }
 })();
 </script>
 </body>
