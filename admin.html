@@ -232,24 +232,45 @@
 // Tabs:  raw_sheet     account_name | model_name | url | page_type | request   ← submissions
 //        all_accounts  account_name (column A)                                 ← dropdown source
 //        all_models    model_name (A) | … | domains (C)                        ← domain log (C2 down)
-// Drive: ds_models/[Model].csv                        ← raw uploaded CSV
-//        ionic_models/[Account]/[Model].csv           ← transformed CSV (url,page_type)
+//        error_logs    timestamp | message | stack | payload                   ← auto-created on failure
+// Drive: Work Files/Ionic/Engagement Spike Models Migration/ds_models/[Account]/[Model].csv     ← raw CSV
+//        Work Files/Ionic/Engagement Spike Models Migration/ionic_models/[Account]/[Model].csv  ← transformed
+//
+// ─── ONE-TIME PERMISSION SETUP (do this once, in the editor) ───────────
+// Drive writes need YOUR authorization. Apps Script only shows the consent
+// dialog when a function is run from the editor — a no-cors POST from the
+// web app can NOT trigger it, which is why writes were failing silently.
+//   1. In the editor toolbar, pick "testDrivePermissions" in the function
+//      dropdown (left of Run), then click Run.
+//   2. A dialog appears: "Authorization required" → Review permissions →
+//      choose your Google account → Advanced → "Go to &lt;project&gt; (unsafe)"
+//      → Allow. (The "unsafe" wording is normal for your own script.)
+//   3. Open View → Execution log: it prints the folder path it created.
+//   4. THEN redeploy a NEW version (Deploy → Manage deployments → ✎ Edit →
+//      Version: New version → Deploy). The running web app now has Drive access.
+// ───────────────────────────────────────────────────────────────────────
 
 const SHEET_NAME       = 'raw_sheet';
 const ACCOUNTS_SHEET   = 'all_accounts';
 const MODELS_SHEET     = 'all_models';
-const RAW_FOLDER       = 'ds_models';
-const IONIC_FOLDER     = 'ionic_models';
+const ERROR_SHEET      = 'error_logs';
 const SPREADSHEET_NAME = 'Advisory_Services_Accounts_Engagement_Spike_Models_Ionic_Migration_Tracker';
 const SPREADSHEET_ID   = '';   // recommended: paste the tracker's spreadsheet ID
+
+// Deep Drive location. Edit these segments if your folder tree differs.
+const DRIVE_BASE_PATH  = ['Work Files', 'Ionic', 'Engagement Spike Models Migration'];
+const RAW_LEAF         = 'ds_models';
+const IONIC_LEAF       = 'ionic_models';
 
 // Source "Type" → transformed "page_type" (compared case-insensitively)
 const TYPE_MAP = { 'highvalue': 'high_value', 'awareness': 'brand_awareness' };
 
 // ─── WRITE: batch of models ────────────────────────────────────────────
 function doPost(e) {
+  var batchId = '';
   try {
     var data    = JSON.parse(e.postData.contents);
+    batchId     = String(data.batch_id || '');
     var account = String(data.account_name || '').trim();
     var request = String(data.request || '').trim();
     var models  = data.models;
@@ -263,9 +284,10 @@ function doPost(e) {
     if (!sheet) throw new Error('Tab not found: ' + SHEET_NAME);
     ensureRawHeaders_(sheet);
 
-    var rawFolder   = getOrCreateRootFolder_(RAW_FOLDER);
-    var ionicParent = getOrCreateRootFolder_(IONIC_FOLDER);
-    var acctFolder  = getOrCreateChildFolder_(ionicParent, account || 'Unspecified');
+    // Deep, auto-created folder tree (…/ds_models/[account], …/ionic_models/[account])
+    var acct        = account || 'Unspecified';
+    var rawFolder   = getOrCreateSubfolderPath(DRIVE_BASE_PATH.concat([RAW_LEAF,   acct]));
+    var ionicFolder = getOrCreateSubfolderPath(DRIVE_BASE_PATH.concat([IONIC_LEAF, acct]));
 
     var totalRows = 0, savedModels = 0;
 
@@ -289,30 +311,43 @@ function doPost(e) {
         : uniqueDomains_(rows.map(function (r) { return r.url; }));
       writeDomains_(ss, modelName, domains.join(', '));
 
-      // 3) raw CSV → ds_models/[model].csv
+      // 3) raw CSV → …/ds_models/[account]/[model].csv
       if (m.raw_csv != null) {
         saveCsv_(rawFolder, modelName + '.csv', String(m.raw_csv));
       }
 
-      // 4) transformed CSV → ionic_models/[account]/[model].csv
-      saveCsv_(acctFolder, modelName + '.csv', buildTransformed_(rows));
+      // 4) transformed CSV → …/ionic_models/[account]/[model].csv
+      saveCsv_(ionicFolder, modelName + '.csv', buildTransformed_(rows));
 
       savedModels++;
     });
 
-    return json_({ status: 'success', models: savedModels, rows: totalRows });
+    var ok = { status: 'success', models: savedModels, rows: totalRows };
+    if (batchId) putReceipt_(batchId, ok);         // let the browser confirm the write really happened
+    return json_(ok);
+
   } catch (err) {
-    return json_({ status: 'error', message: String(err) });
+    logError_(err, e);                             // expose the hidden error in the sheet
+    var out = { status: 'error', message: String(err &amp;&amp; err.message ? err.message : err) };
+    if (batchId) putReceipt_(batchId, out);
+    return json_(out);
   }
 }
 
-// ─── READ: account list (JSONP) ────────────────────────────────────────
+// ─── READ: accounts + write-confirmation receipt (JSONP) ───────────────
 function doGet(e) {
   var cb     = e &amp;&amp; e.parameter ? e.parameter.callback : null;
   var action = e &amp;&amp; e.parameter ? e.parameter.action   : null;
-  var payload = (action === 'accounts')
-    ? { status: 'ok', accounts: getAccounts_() }
-    : { status: 'ok', message: 'Engagement Spike intake endpoint is live' };
+
+  var payload;
+  if (action === 'accounts') {
+    payload = { status: 'ok', accounts: getAccounts_() };
+  } else if (action === 'receipt') {
+    var r = getReceipt_(e.parameter.id);
+    payload = r ? { status: 'ok', found: true, receipt: r } : { status: 'ok', found: false };
+  } else {
+    payload = { status: 'ok', message: 'Engagement Spike intake endpoint is live' };
+  }
 
   var body = JSON.stringify(payload);
   if (cb) {
@@ -320,6 +355,55 @@ function doGet(e) {
       .setMimeType(ContentService.MimeType.JAVASCRIPT);
   }
   return ContentService.createTextOutput(body).setMimeType(ContentService.MimeType.JSON);
+}
+
+// ─── Recursive folder resolver ─────────────────────────────────────────
+// Walks from My Drive root through each name in pathArray, creating any
+// segment that doesn't exist yet, and returns the deepest folder.
+function getOrCreateSubfolderPath(pathArray) {
+  var folder = DriveApp.getRootFolder();
+  for (var i = 0; i &lt; pathArray.length; i++) {
+    var name = String(pathArray[i] == null ? '' : pathArray[i]).trim();
+    if (!name) continue;
+    var it = folder.getFoldersByName(name);
+    folder = it.hasNext() ? it.next() : folder.createFolder(name);
+  }
+  return folder;
+}
+
+// Run THIS from the editor once to trigger the Drive consent dialog (see top).
+function testDrivePermissions() {
+  var folder = getOrCreateSubfolderPath(DRIVE_BASE_PATH.concat([RAW_LEAF, 'Permission Test']));
+  Logger.log('OK — Drive is authorized. Folder ready: ' + folder.getName() + ' (id ' + folder.getId() + ')');
+  return folder.getName();
+}
+
+// ─── error logging + receipts ──────────────────────────────────────────
+function logError_(err, e) {
+  try {
+    var ss = getSS_();
+    var sheet = ss.getSheetByName(ERROR_SHEET);
+    if (!sheet) {
+      sheet = ss.insertSheet(ERROR_SHEET);
+      sheet.getRange(1, 1, 1, 4).setValues([['timestamp', 'message', 'stack', 'payload']]);
+    }
+    var payload = '';
+    try { payload = (e &amp;&amp; e.postData) ? String(e.postData.contents).slice(0, 4000) : ''; } catch (ignore) {}
+    sheet.appendRow([new Date(), String(err &amp;&amp; err.message ? err.message : err), String(err &amp;&amp; err.stack ? err.stack : ''), payload]);
+  } catch (ignore) {
+    // If even the spreadsheet can't be opened, fall back to the execution log.
+    try { Logger.log('doPost error (unable to write error_logs): ' + err); } catch (ignore2) {}
+  }
+}
+function putReceipt_(id, obj) {
+  try { CacheService.getScriptCache().put('receipt_' + id, JSON.stringify(obj), 21600); } catch (ignore) {}
+}
+function getReceipt_(id) {
+  try {
+    if (!id) return null;
+    var v = CacheService.getScriptCache().get('receipt_' + String(id));
+    return v ? JSON.parse(v) : null;
+  } catch (e) { return null; }
 }
 
 // ─── transforms ────────────────────────────────────────────────────────
@@ -356,7 +440,7 @@ function domainOf_(u) {
   return host.toLowerCase();
 }
 
-// ─── sheet + drive helpers ─────────────────────────────────────────────
+// ─── sheet helpers ─────────────────────────────────────────────────────
 function getSS_() {
   return SPREADSHEET_ID ? SpreadsheetApp.openById(SPREADSHEET_ID) : openByName_(SPREADSHEET_NAME);
 }
@@ -365,15 +449,13 @@ function openByName_(name) {
   if (f.hasNext()) return SpreadsheetApp.open(f.next());
   throw new Error('Spreadsheet not found: ' + name);
 }
-
 function ensureRawHeaders_(sheet) {
   if (sheet.getLastRow() === 0) {
     sheet.getRange(1, 1, 1, 5).setValues([['account_name', 'model_name', 'url', 'page_type', 'request']]);
   } else if (!sheet.getRange(1, 5).getValue()) {
-    sheet.getRange(1, 5).setValue('request');   // add new column header if it isn't there yet
+    sheet.getRange(1, 5).setValue('request');
   }
 }
-
 function getAccounts_() {
   var sheet = getSS_().getSheetByName(ACCOUNTS_SHEET);
   if (!sheet) return [];
@@ -385,7 +467,6 @@ function getAccounts_() {
   if (col.length &amp;&amp; /^(account_name|account name|account|accounts|name)$/i.test(col[0])) col.shift();
   return col;
 }
-
 function writeDomains_(ss, modelName, domainsCsv) {
   var sheet = ss.getSheetByName(MODELS_SHEET);
   if (!sheet) {
@@ -404,14 +485,7 @@ function writeDomains_(ss, modelName, domainsCsv) {
   sheet.getRange(rowIdx, 3).setValue(domainsCsv);
 }
 
-function getOrCreateRootFolder_(name) {
-  var it = DriveApp.getFoldersByName(name);
-  return it.hasNext() ? it.next() : DriveApp.createFolder(name);
-}
-function getOrCreateChildFolder_(parent, name) {
-  var it = parent.getFoldersByName(name);
-  return it.hasNext() ? it.next() : parent.createFolder(name);
-}
+// ─── drive file helper ─────────────────────────────────────────────────
 function saveCsv_(folder, filename, content) {
   var existing = folder.getFilesByName(filename);   // replace same-named file (idempotent)
   while (existing.hasNext()) existing.next().setTrashed(true);
@@ -758,10 +832,15 @@ function json_(obj) {
   drop.addEventListener("drop", function(e){ if (e.dataTransfer.files && e.dataTransfer.files.length) addFiles(e.dataTransfer.files); });
 
   // ── Submit ───────────────────────────────────────────────────────────
+  // A no-cors POST resolves even when Apps Script throws, so we don't trust
+  // it: we confirm by polling a server-written receipt (JSONP) before we
+  // report success.
   submitBtn.addEventListener("click", function(){
     var sub = submittable();
     var totalRows = sub.reduce(function(s,m){ return s + m.rows.length; }, 0);
+    var batchId = "b_" + Date.now() + "_" + Math.random().toString(36).slice(2,8);
     var payload = {
+      batch_id: batchId,
       account_name: accountSel.value,
       request: requestSel.value,
       models: sub.map(function(m){ return { model_name: m.modelName, rows: m.rows, domains: m.domains, raw_csv: m.rawText }; })
@@ -770,11 +849,53 @@ function json_(obj) {
     setStatus("sending", "<span class='spinner'></span>Sending "+sub.length+" model"+(sub.length===1?"":"s")+" ("+totalRows+" row"+(totalRows===1?"":"s")+")…");
     fetch(getEndpoint(), { method:"POST", mode:"no-cors", headers:{ "Content-Type":"text/plain;charset=utf-8" }, body: JSON.stringify(payload) })
       .then(function(){
-        setStatus("done", "✓ Submitted "+sub.length+" model"+(sub.length===1?"":"s")+" ("+totalRows+" row"+(totalRows===1?"":"s")+"). Verify in the tracker.");
-        models = []; fileInput.value = ""; renderList(); requestSel.selectedIndex = 0; refreshSubmit();
+        setStatus("sending", "<span class='spinner'></span>Submitted — confirming with the server…");
+        confirmReceipt(batchId);
       })
       .catch(function(){ setStatus("fail", "✕ Couldn't reach the tracker. Check the URL and try again."); submitBtn.disabled = false; });
   });
+
+  var jseq2 = 0;
+  function pollReceipt(batchId, onOk, onFail){
+    var base = getEndpoint();
+    if (!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec/.test(base)){ onFail(); return; }
+    var cb = "__esiRcpt_" + Date.now() + "_" + (++jseq2);
+    var s = document.createElement("script"); var done = false;
+    function cleanup(){ try{ delete window[cb]; }catch(e){ window[cb]=undefined; } if (s.parentNode) s.parentNode.removeChild(s); }
+    var timer = setTimeout(function(){ if (done) return; done = true; cleanup(); onFail(); }, 8000);
+    window[cb] = function(resp){ if (done) return; done = true; clearTimeout(timer); cleanup(); onOk(resp); };
+    s.onerror = function(){ if (done) return; done = true; clearTimeout(timer); cleanup(); onFail(); };
+    s.src = base + (base.indexOf("?")===-1?"?":"&") + "action=receipt&id=" + encodeURIComponent(batchId) + "&callback=" + cb + "&t=" + Date.now();
+    document.head.appendChild(s);
+  }
+  function confirmReceipt(batchId){
+    var attempts = 0, max = 8;
+    function tick(){
+      attempts++;
+      pollReceipt(batchId, function(resp){
+        if (resp && resp.found && resp.receipt){
+          var r = resp.receipt;
+          if (r.status === "success"){
+            setStatus("done", "✓ Confirmed — "+r.models+" model"+(r.models===1?"":"s")+" ("+r.rows+" row"+(r.rows===1?"":"s")+") saved to the tracker.");
+            models = []; fileInput.value = ""; renderList(); requestSel.selectedIndex = 0; refreshSubmit();
+          } else {
+            setStatus("fail", "✕ The server rejected this submission: "+ (r.message || "unknown error") +". Nothing was saved — see the error_logs tab. Your files are still here.");
+            submitBtn.disabled = false;
+          }
+        } else if (attempts < max){
+          setTimeout(tick, 1300);
+        } else {
+          setStatus("fail", "⚠ Submitted, but the server didn’t confirm. Check the tracker / error_logs before resubmitting to avoid duplicates.");
+          submitBtn.disabled = false;
+        }
+      }, function(){
+        if (attempts < max) setTimeout(tick, 1300);
+        else { setStatus("fail", "⚠ Submitted, but confirmation couldn’t be reached. Verify in the tracker before resubmitting."); submitBtn.disabled = false; }
+      });
+    }
+    setTimeout(tick, 1400);
+  }
+
   function setStatus(kind, html){ statusEl.className = "status " + kind; statusEl.innerHTML = html; }
 
   function escapeHtml(s){ return String(s).replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]; }); }
