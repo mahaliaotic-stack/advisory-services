@@ -404,10 +404,15 @@
   drop.addEventListener("drop", function(e){ if (e.dataTransfer.files && e.dataTransfer.files.length) addFiles(e.dataTransfer.files); });
 
   // ── Submit ───────────────────────────────────────────────────────────
+  // NOTE: a no-cors POST resolves even when Apps Script throws, so the POST
+  // resolving is NOT proof of success. We confirm by polling a server-written
+  // receipt (via JSONP) before we tell the user it worked.
   submitBtn.addEventListener("click", function(){
     var sub = submittable();
     var totalRows = sub.reduce(function(s,m){ return s + m.rows.length; }, 0);
+    var batchId = "b_" + Date.now() + "_" + Math.random().toString(36).slice(2,8);
     var payload = {
+      batch_id: batchId,
       account_name: accountSel.value,
       request: requestSel.value,
       models: sub.map(function(m){
@@ -418,14 +423,55 @@
     setStatus("sending", "<span class='spinner'></span>Sending "+sub.length+" model"+(sub.length===1?"":"s")+" ("+totalRows+" row"+(totalRows===1?"":"s")+")…");
     fetch(WEBAPP_URL, { method:"POST", mode:"no-cors", headers:{ "Content-Type":"text/plain;charset=utf-8" }, body: JSON.stringify(payload) })
       .then(function(){
-        setStatus("done", "✓ Submitted "+sub.length+" model"+(sub.length===1?"":"s")+" ("+totalRows+" row"+(totalRows===1?"":"s")+"). Thank you!");
-        models = []; fileInput.value = ""; renderList(); requestSel.selectedIndex = 0; refreshSubmit();
+        setStatus("sending", "<span class='spinner'></span>Submitted — confirming with the server…");
+        confirmReceipt(batchId);
       })
       .catch(function(){
         setStatus("fail", "✕ Couldn't reach the tracker. Check your connection and try again.");
         submitBtn.disabled = false;
       });
   });
+
+  var jseq = 0;
+  function pollReceipt(batchId, onOk, onFail){
+    if (!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec/.test(WEBAPP_URL)){ onFail(); return; }
+    var cb = "__esiRcpt_" + Date.now() + "_" + (++jseq);
+    var s = document.createElement("script"); var done = false;
+    function cleanup(){ try{ delete window[cb]; }catch(e){ window[cb]=undefined; } if (s.parentNode) s.parentNode.removeChild(s); }
+    var timer = setTimeout(function(){ if (done) return; done = true; cleanup(); onFail(); }, 8000);
+    window[cb] = function(resp){ if (done) return; done = true; clearTimeout(timer); cleanup(); onOk(resp); };
+    s.onerror = function(){ if (done) return; done = true; clearTimeout(timer); cleanup(); onFail(); };
+    s.src = WEBAPP_URL + (WEBAPP_URL.indexOf("?")===-1?"?":"&") + "action=receipt&id=" + encodeURIComponent(batchId) + "&callback=" + cb + "&t=" + Date.now();
+    document.head.appendChild(s);
+  }
+  function confirmReceipt(batchId){
+    var attempts = 0, max = 8;
+    function tick(){
+      attempts++;
+      pollReceipt(batchId, function(resp){
+        if (resp && resp.found && resp.receipt){
+          var r = resp.receipt;
+          if (r.status === "success"){
+            setStatus("done", "✓ Confirmed — "+r.models+" model"+(r.models===1?"":"s")+" ("+r.rows+" row"+(r.rows===1?"":"s")+") saved to the tracker. Thank you!");
+            models = []; fileInput.value = ""; renderList(); requestSel.selectedIndex = 0; refreshSubmit();
+          } else {
+            setStatus("fail", "✕ The server rejected this submission: "+ (r.message || "unknown error") +". Nothing was saved. Your files are still here — fix and resubmit.");
+            submitBtn.disabled = false;
+          }
+        } else if (attempts < max){
+          setTimeout(tick, 1300);
+        } else {
+          setStatus("fail", "⚠ Submitted, but the server didn’t confirm. Do NOT resubmit yet — check the tracker first to avoid duplicates.");
+          submitBtn.disabled = false;
+        }
+      }, function(){
+        if (attempts < max) setTimeout(tick, 1300);
+        else { setStatus("fail", "⚠ Submitted, but confirmation couldn’t be reached. Check the tracker before resubmitting."); submitBtn.disabled = false; }
+      });
+    }
+    setTimeout(tick, 1400);   // give the write a moment to run and record its receipt
+  }
+
   function setStatus(kind, html){ statusEl.className = "status " + kind; statusEl.innerHTML = html; }
 
   function escapeHtml(s){ return String(s).replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]; }); }
