@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Advisory Services — Engagement Spike Model Intake</title>
+<style>
+  :root{
+    --bg:#f4f4f4;
+    --panel:#ffffff;
+    --ink:#111111;
+    --ink-2:#3d3d3d;
+    --muted:#6b6b6b;
+    --line:#d9d9d9;
+    --line-strong:#b6b6b6;
+    --field:#fafafa;
+    --ok:#1c1c1c;
+    --ok-bg:#e9e9e9;
+    --warn-bg:#ededed;
+    --err-bg:#e2e2e2;
+    --shadow:0 1px 2px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.05);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:15px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    padding:40px 20px 80px;
+  }
+  .wrap{max-width:760px;margin:0 auto;}
+
+  header.masthead{margin-bottom:28px;border-bottom:1px solid var(--line);padding-bottom:20px;}
+  h1{font-size:24px;font-weight:700;letter-spacing:-.01em;margin:0 0 6px;}
+  .subtitle{font-size:14px;color:var(--muted);margin:0;letter-spacing:.01em;}
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    box-shadow:var(--shadow);
+    padding:26px 26px 28px;
+    margin-bottom:20px;
+  }
+
+  .field{margin-bottom:20px;}
+  .field:last-child{margin-bottom:0;}
+  label.lbl{display:block;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2);margin-bottom:8px;}
+  .req{color:var(--ink);}
+
+  select,input[type=text],input[type=url]{
+    width:100%;
+    appearance:none;
+    background:var(--field);
+    border:1px solid var(--line-strong);
+    border-radius:7px;
+    padding:11px 13px;
+    font-size:15px;
+    color:var(--ink);
+    transition:border-color .12s ease, background .12s ease;
+  }
+  select:focus,input:focus{outline:none;border-color:var(--ink);background:#fff;}
+  select{
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%23555' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat:no-repeat;
+    background-position:right 13px center;
+    padding-right:34px;
+  }
+  .hint{font-size:12px;color:var(--muted);margin-top:6px;}
+
+  /* Dropzone */
+  .drop{
+    border:1.5px dashed var(--line-strong);
+    border-radius:9px;
+    background:var(--field);
+    padding:26px 20px;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .12s ease, background .12s ease;
+  }
+  .drop:hover{border-color:var(--ink-2);}
+  .drop.dragging{border-color:var(--ink);background:#f0f0f0;}
+  .drop .icon{font-size:22px;line-height:1;color:var(--ink-2);margin-bottom:8px;}
+  .drop .big{font-size:14px;font-weight:600;color:var(--ink);}
+  .drop .small{font-size:12px;color:var(--muted);margin-top:4px;}
+  .drop input[type=file]{display:none;}
+
+  .filechip{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    margin-top:12px;padding:10px 12px;border:1px solid var(--line);border-radius:7px;background:#fff;
+    font-size:13px;
+  }
+  .filechip .name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .filechip .meta{color:var(--muted);font-size:12px;}
+  .linkbtn{background:none;border:none;color:var(--ink);cursor:pointer;font-size:12px;text-decoration:underline;padding:0;}
+
+  /* Result indicators */
+  .results{margin-top:16px;}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+  .chip{
+    display:inline-flex;align-items:center;gap:7px;
+    font-size:12px;font-weight:600;
+    border:1px solid var(--line-strong);border-radius:999px;
+    padding:5px 12px;background:var(--ok-bg);color:var(--ink);
+  }
+  .chip .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;}
+  .chip.ok .dot{background:#1c1c1c;}
+  .chip.warn{background:var(--warn-bg);border-style:dashed;}
+  .chip.warn .dot{background:#7a7a7a;}
+  .chip.err{background:var(--err-bg);border-color:#8f8f8f;}
+  .chip.err .dot{background:#000;box-shadow:0 0 0 2px #fff inset;border:1px solid #000;}
+
+  .msgs{list-style:none;margin:0;padding:0;font-size:13px;}
+  .msgs li{padding:7px 0;border-top:1px solid var(--line);display:flex;gap:9px;align-items:flex-start;}
+  .msgs li:first-child{border-top:none;}
+  .msgs .mark{font-weight:700;flex:0 0 16px;text-align:center;}
+  .msgs .m-ok .mark{color:#111;}
+  .msgs .m-warn .mark{color:#666;}
+  .msgs .m-err .mark{color:#000;}
+  .msgs .m-err{color:#111;font-weight:500;}
+
+  /* Preview table */
+  .previewwrap{margin-top:14px;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+  .previewhead{font-size:12px;font-weight:600;color:var(--ink-2);padding:9px 12px;background:#f7f7f7;border-bottom:1px solid var(--line);}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  th{background:#fbfbfb;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;font-size:11px;}
+  tr:last-child td{border-bottom:none;}
+  td.url{max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;}
+  tr.bad td{background:#f0f0f0;color:#000;}
+  tr.bad td:first-child::before{content:"! ";font-weight:700;}
+  .morerows{font-size:12px;color:var(--muted);padding:8px 12px;background:#fbfbfb;}
+
+  /* Submit */
+  .actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:4px;}
+  button.submit{
+    appearance:none;border:1px solid var(--ink);background:var(--ink);color:#fff;
+    font-size:14px;font-weight:600;padding:12px 22px;border-radius:8px;cursor:pointer;
+    transition:opacity .12s ease, background .12s ease;
+  }
+  button.submit:hover{background:#000;}
+  button.submit:disabled{background:#c9c9c9;border-color:#c9c9c9;color:#fff;cursor:not-allowed;}
+  .status{font-size:13px;color:var(--muted);}
+  .status.sending{color:var(--ink-2);}
+  .status.done{color:var(--ink);font-weight:600;}
+  .status.fail{color:#000;font-weight:600;}
+  .spinner{display:inline-block;width:12px;height:12px;border:2px solid #bbb;border-top-color:#222;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px;margin-right:6px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* Config / setup */
+  details.config{margin-top:8px;border:1px solid var(--line);border-radius:9px;background:#fff;}
+  details.config>summary{cursor:pointer;list-style:none;padding:14px 18px;font-size:13px;font-weight:600;color:var(--ink-2);display:flex;justify-content:space-between;align-items:center;}
+  details.config>summary::-webkit-details-marker{display:none;}
+  details.config>summary::after{content:"+";font-size:16px;color:var(--muted);}
+  details.config[open]>summary::after{content:"–";}
+  .config-body{padding:0 18px 18px;border-top:1px solid var(--line);}
+  .config-body .field{margin-top:16px;}
+  pre.code{
+    background:#111;color:#eaeaea;border-radius:8px;padding:16px;overflow:auto;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.55;margin:10px 0 0;
+    max-height:340px;
+  }
+  .codehead{display:flex;justify-content:space-between;align-items:center;margin-top:14px;}
+  .codehead h3{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2);margin:0;}
+  .copybtn{font-size:12px;border:1px solid var(--line-strong);background:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;color:var(--ink);}
+  .copybtn:hover{background:#f2f2f2;}
+  ol.steps{font-size:13px;color:var(--ink-2);padding-left:20px;margin:12px 0 0;}
+  ol.steps li{margin-bottom:6px;}
+  code.inline{background:#efefef;border-radius:4px;padding:1px 6px;font-family:ui-monospace,Menlo,monospace;font-size:12px;}
+
+  /* lock + account editor */
+  #lockScreen .lockrow{display:flex;gap:10px;}
+  #lockScreen .lockrow input{flex:1;}
+  .unlockbtn,.minibtn{appearance:none;border:1px solid var(--ink);background:var(--ink);color:#fff;font-size:13px;font-weight:600;padding:10px 16px;border-radius:7px;cursor:pointer;white-space:nowrap;}
+  .unlockbtn:hover,.minibtn:hover{background:#000;}
+  .minibtn.ghost{background:#fff;color:var(--ink);border-color:var(--line-strong);}
+  .minibtn.ghost:hover{background:#f2f2f2;}
+  .lockerr{font-size:12px;color:#000;font-weight:600;margin-top:8px;min-height:1em;}
+  textarea#acctList{width:100%;background:var(--field);border:1px solid var(--line-strong);border-radius:7px;padding:11px 13px;font-size:14px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink);resize:vertical;line-height:1.6;}
+  textarea#acctList:focus{outline:none;border-color:var(--ink);background:#fff;}
+  .editorrow{display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:12px;flex-wrap:wrap;}
+  .editorbtns{display:flex;gap:8px;}
+  details.subfold{margin-top:12px;}
+  details.subfold>summary{cursor:pointer;list-style:none;font-size:12px;font-weight:600;color:var(--ink-2);padding:4px 0;}
+  details.subfold>summary::-webkit-details-marker{display:none;}
+  details.subfold>summary::before{content:"▸ ";color:var(--muted);}
+  details.subfold[open]>summary::before{content:"▾ ";}
+  details.subfold textarea{margin-top:10px;}
+
+  .footnote{font-size:11px;color:var(--muted);margin-top:22px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <h1>Advisory Services: Engagement Spike Models</h1>
+    <p class="subtitle">Engagement Spike Model Intake for Ionic Migration</p>
+  </header>
+
+  <div class="card">
+
+    <div class="field">
+      <label class="lbl" for="accountName">Account Name <span class="req">*</span></label>
+      <select id="accountName">
+        <option value="" disabled selected>Select an account…</option>
+      </select>
+      <div class="hint" id="acctSource"></div>
+    </div>
+
+    <div class="field">
+      <label class="lbl" for="modelName">Model Name <span class="req">*</span></label>
+      <input type="text" id="modelName" placeholder="e.g. Q3 Ionic Migration — Product Pages" autocomplete="off" />
+    </div>
+
+    <div class="field">
+      <label class="lbl">Spike Data File (CSV) <span class="req">*</span></label>
+      <div class="drop" id="drop">
+        <div class="icon">⇪</div>
+        <div class="big">Drop CSV here or click to browse</div>
+        <div class="small">Expected columns: Page URL, Type, Added On Date</div>
+        <input type="file" id="fileInput" accept=".csv,text/csv" />
+      </div>
+      <div id="fileChip"></div>
+
+      <div class="results" id="results" style="display:none;"></div>
+    </div>
+
+  </div>
+
+  <div class="actions">
+    <button class="submit" id="submitBtn" disabled>Submit to Tracker</button>
+    <span class="status" id="status"></span>
+  </div>
+
+  <details class="config" id="configPanel">
+    <summary>Setup &amp; Connection</summary>
+    <div class="config-body">
+
+      <div id="lockScreen">
+        <div class="field">
+          <label class="lbl" for="cfgPass">Enter password to edit settings</label>
+          <div class="lockrow">
+            <input type="password" id="cfgPass" placeholder="Password" autocomplete="off" />
+            <button class="unlockbtn" id="unlockBtn">Unlock</button>
+          </div>
+          <div class="lockerr" id="lockErr"></div>
+          <div class="hint">Settings are locked so teammates don’t change the connection by accident.</div>
+        </div>
+      </div>
+
+      <div id="setupContent" hidden>
+
+      <div class="field">
+        <label class="lbl" for="webAppUrl">Apps Script Web App URL <span class="req">*</span></label>
+        <input type="url" id="webAppUrl" placeholder="https://script.google.com/macros/s/AKfy…/exec" autocomplete="off" />
+        <div class="hint">Pre-configured for your team. Edits save in this browser. Must end in <code class="inline">/exec</code>.</div>
+      </div>
+
+      <div class="field">
+        <label class="lbl">Account Name list</label>
+        <div class="editorrow" style="margin-top:0;margin-bottom:8px;">
+          <span class="hint" id="acctCount"></span>
+          <button class="minibtn" id="refreshAccts">Refresh from sheet</button>
+        </div>
+        <div class="hint">The dropdown loads live from the <code class="inline">all_accounts</code> tab of your tracker — that sheet is the single source of truth for <em>everyone</em>. Add or remove accounts there, then Refresh.</div>
+
+        <details class="subfold">
+          <summary>Manual fallback list (optional)</summary>
+          <textarea id="acctList" rows="7" spellcheck="false" placeholder="One account per line"></textarea>
+          <div class="editorrow">
+            <span class="hint">Pinned locally · used only if the sheet can’t be reached.</span>
+            <span class="editorbtns">
+              <button class="minibtn" id="saveAccts">Pin override</button>
+              <button class="minibtn ghost" id="resetAccts">Clear override</button>
+            </span>
+          </div>
+        </details>
+      </div>
+
+      <div class="codehead">
+        <h3>Apps Script (Code.gs)</h3>
+        <button class="copybtn" id="copyCode">Copy</button>
+      </div>
+      <pre class="code" id="gasCode">// ── Engagement Spike Model Intake ──────────────────────────────────────
+// Spreadsheet: Advisory_Services_Accounts_Engagement_Spike_Models_Ionic_Migration_Tracker
+// Tabs:  raw_sheet     (account_name | model_name | url | page_type)  ← submissions
+//        all_accounts  (account_name in column A)                     ← dropdown source
+
+const SHEET_NAME       = 'raw_sheet';
+const ACCOUNTS_SHEET   = 'all_accounts';
+const SPREADSHEET_NAME = 'Advisory_Services_Accounts_Engagement_Spike_Models_Ionic_Migration_Tracker';
+// Recommended: paste the spreadsheet ID (from its URL) to skip the name lookup:
+const SPREADSHEET_ID   = '';
+
+// ---- WRITE: append submitted rows -------------------------------------
+function doPost(e) {
+  try {
+    var data  = JSON.parse(e.postData.contents);
+    var sheet = getSS_().getSheetByName(SHEET_NAME);
+    if (!sheet) throw new Error('Tab not found: ' + SHEET_NAME);
+
+    ensureHeaders_(sheet, ['account_name', 'model_name', 'url', 'page_type']);
+
+    var rows = (data.rows || []).map(function (r) {
+      return [ data.account_name || '', data.model_name || '', r.url || '', r.page_type || '' ];
+    });
+    if (rows.length) {
+      sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, 4).setValues(rows);
+    }
+    return json_({ status: 'success', inserted: rows.length });
+  } catch (err) {
+    return json_({ status: 'error', message: String(err) });
+  }
+}
+
+// ---- READ: serve the account list (JSONP for the intake page) ---------
+function doGet(e) {
+  var cb     = e &amp;&amp; e.parameter ? e.parameter.callback : null;
+  var action = e &amp;&amp; e.parameter ? e.parameter.action   : null;
+  var payload = (action === 'accounts')
+    ? { status: 'ok', accounts: getAccounts_() }
+    : { status: 'ok', message: 'Engagement Spike intake endpoint is live' };
+
+  var body = JSON.stringify(payload);
+  if (cb) {
+    return ContentService.createTextOutput(cb + '(' + body + ')')
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+  return ContentService.createTextOutput(body).setMimeType(ContentService.MimeType.JSON);
+}
+
+// ---- helpers ----------------------------------------------------------
+function getSS_() {
+  return SPREADSHEET_ID ? SpreadsheetApp.openById(SPREADSHEET_ID)
+                        : openByName_(SPREADSHEET_NAME);
+}
+
+function getAccounts_() {
+  var ss    = getSS_();
+  var sheet = ss.getSheetByName(ACCOUNTS_SHEET);
+  if (!sheet) return [];               // tab missing → page uses its fallback
+  var last = sheet.getLastRow();
+  if (last &lt; 1) return [];
+  var col = sheet.getRange(1, 1, last, 1).getValues()
+    .map(function (r) { return String(r[0]).trim(); })
+    .filter(function (v) { return v; });
+  // Skip a header cell if the first value looks like a column label
+  if (col.length &amp;&amp; /^(account_name|account name|account|accounts|name)$/i.test(col[0])) {
+    col.shift();
+  }
+  return col;
+}
+
+function openByName_(name) {
+  var files = DriveApp.getFilesByName(name);
+  if (files.hasNext()) return SpreadsheetApp.open(files.next());
+  throw new Error('Spreadsheet not found: ' + name);
+}
+
+function ensureHeaders_(sheet, headers) {
+  if (sheet.getLastRow() === 0) {
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  }
+}
+
+function json_(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}</pre>
+
+      <ol class="steps">
+        <li>Open your project at <strong>script.google.com</strong> and replace <code class="inline">Code.gs</code> with the code above.</li>
+        <li>(Recommended) paste your tracker’s spreadsheet ID into <code class="inline">SPREADSHEET_ID</code>.</li>
+        <li>The dropdown reads column A of your existing <code class="inline">all_accounts</code> tab (a header row like <code class="inline">account_name</code> is skipped automatically). Edit that tab to change the dropdown for <em>everyone</em>.</li>
+        <li><strong>Deploy → Manage deployments → ✎ Edit → Version: New version → Deploy</strong> to update the same <code class="inline">/exec</code> URL. (First-time setup: New deployment → Web app; Execute as <em>Me</em>; Access <em>Anyone</em>.)</li>
+      </ol>
+
+      </div><!-- /setupContent -->
+    </div>
+  </details>
+
+  <p class="footnote">Advisory Services Team 2026 · data appends to <code class="inline">raw_sheet</code> in the Ionic Migration Tracker.</p>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ── Account list seed (from Advisory_Services_Accounts.csv) ──────────
+  var DEFAULT_ACCOUNTS = [
+    "Rhapsody","Alteryx","CAH - Distro","CAH - Pharma","CAH - Wavemark",
+    "Carelon","Customer Zero","Data Intensity Inc.","Datto/Kaseya","DNA Technologies",
+    "FICO","FlashGlobal","Freeman","Gilbarco","LP Building Solutions","MagMutual",
+    "Molecular Devices","Mosai (FKA Forcura)","Service Express (Park Place)",
+    "LevelBlue (Trustwave)","Sedex EMEA","SevenRooms","Google","Spectrum"
+  ];
+  // Pre-configured team endpoint + settings password:
+  var DEFAULT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwEaTwpycpy1-82qpfmbwOJQo5NBMXteut8ftdwe-serxvB0CSXeEuBMjUUDsyPY-P6Vw/exec";
+  var CFG_PASSWORD = "advisory2026";
+
+  var $ = function(id){ return document.getElementById(id); };
+  var accountSel = $("accountName");
+  var modelInput = $("modelName");
+  var fileInput  = $("fileInput");
+  var drop       = $("drop");
+  var fileChip   = $("fileChip");
+  var results    = $("results");
+  var submitBtn  = $("submitBtn");
+  var statusEl   = $("status");
+  var webAppUrl  = $("webAppUrl");
+  var lockScreen = $("lockScreen"), setupContent = $("setupContent");
+  var cfgPass = $("cfgPass"), unlockBtn = $("unlockBtn"), lockErr = $("lockErr");
+  var acctList = $("acctList"), acctCount = $("acctCount"),
+      saveAccts = $("saveAccts"), resetAccts = $("resetAccts"),
+      refreshAccts = $("refreshAccts"), acctSource = $("acctSource");
+
+  // ── safe storage (persists when hosted; degrades in sandboxed preview) ─
+  function lsGet(k){ try{ return window.localStorage.getItem(k); }catch(e){ return null; } }
+  function lsSet(k,v){ try{ window.localStorage.setItem(k,v); }catch(e){} }
+  function ssGet(k){ try{ return window.sessionStorage.getItem(k); }catch(e){ return null; } }
+  function ssSet(k,v){ try{ window.sessionStorage.setItem(k,v); }catch(e){} }
+
+  // ── account list: the `accounts` tab is the source of truth ──────────
+  //   precedence: manual override (pinned) → live sheet (JSONP) → cache → default
+  var ACCT_CACHE    = "esi_accounts_cache";     // last good sheet fetch (auto)
+  var ACCT_OVERRIDE = "esi_accounts_override";  // pinned local fallback (manual)
+
+  function readJSONArr(k){
+    var raw = lsGet(k);
+    if (raw){ try{ var a = JSON.parse(raw); if (Array.isArray(a) && a.length) return a; }catch(e){} }
+    return null;
+  }
+  var ACCOUNTS = readJSONArr(ACCT_OVERRIDE) || readJSONArr(ACCT_CACHE) || DEFAULT_ACCOUNTS.slice();
+
+  function setAcctSource(text){ if (acctSource) acctSource.textContent = text; }
+  function populateAccounts(){
+    var current = accountSel.value;
+    accountSel.innerHTML = '<option value="" disabled>Select an account…</option>';
+    ACCOUNTS.forEach(function(a){
+      var o = document.createElement("option"); o.value = a; o.textContent = a; accountSel.appendChild(o);
+    });
+    if (current && ACCOUNTS.indexOf(current) !== -1) accountSel.value = current;
+    else accountSel.selectedIndex = 0;
+  }
+  populateAccounts();
+
+  // JSONP read of the `accounts` tab (bypasses CORS for GET)
+  var jsonpSeq = 0;
+  function fallbackStatus(){
+    if (readJSONArr(ACCT_OVERRIDE)) return; // pinned; leave as-is
+    var fb = readJSONArr(ACCT_CACHE);
+    setAcctSource(ACCOUNTS.length + " accounts · " + (fb ? "cached (sheet unreachable)" : "built-in list (sheet unreachable)"));
+  }
+  function loadAccountsFromSheet(manual){
+    var base = (webAppUrl.value || DEFAULT_WEBAPP_URL).trim();
+    if (!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec/.test(base)){
+      setAcctSource(ACCOUNTS.length + " accounts · check Web App URL");
+      if (manual) flash(refreshAccts, "Bad URL");
+      return;
+    }
+    var cbName = "__esiAccts_" + Date.now() + "_" + (++jsonpSeq);
+    var script = document.createElement("script");
+    var done = false;
+    function cleanup(){
+      try{ delete window[cbName]; }catch(e){ window[cbName] = undefined; }
+      if (script && script.parentNode) script.parentNode.removeChild(script);
+    }
+    var timer = setTimeout(function(){
+      if (done) return; done = true; cleanup(); fallbackStatus();
+      if (manual) flash(refreshAccts, "No response");
+    }, 9000);
+    window[cbName] = function(resp){
+      if (done) return; done = true; clearTimeout(timer); cleanup();
+      var list = resp && resp.accounts;
+      if (Array.isArray(list) && list.length){
+        ACCOUNTS = list.map(function(s){ return String(s).trim(); }).filter(Boolean);
+        lsSet(ACCT_CACHE, JSON.stringify(ACCOUNTS));
+        populateAccounts(); fillAcctEditor(); refreshSubmit();
+        setAcctSource(ACCOUNTS.length + " accounts · live from sheet");
+        if (manual) flash(refreshAccts, "Updated ✓");
+      } else {
+        setAcctSource(ACCOUNTS.length + " accounts · sheet returned none");
+        if (manual) flash(refreshAccts, "Empty");
+      }
+    };
+    script.onerror = function(){
+      if (done) return; done = true; clearTimeout(timer); cleanup(); fallbackStatus();
+      if (manual) flash(refreshAccts, "Failed");
+    };
+    script.src = base + (base.indexOf("?") === -1 ? "?" : "&") +
+                 "action=accounts&callback=" + cbName + "&t=" + Date.now();
+    document.head.appendChild(script);
+  }
+
+  // ── Web App URL: pre-configured default, editable + persisted ────────
+  webAppUrl.value = lsGet("esi_weburl") || DEFAULT_WEBAPP_URL;
+  webAppUrl.addEventListener("input", function(){ lsSet("esi_weburl", webAppUrl.value.trim()); });
+
+  // Decide the account source on load
+  if (readJSONArr(ACCT_OVERRIDE)) setAcctSource(ACCOUNTS.length + " accounts · manual fallback (pinned)");
+  else { setAcctSource("Loading accounts from sheet…"); loadAccountsFromSheet(false); }
+
+  // ── Setup password gate ──────────────────────────────────────────────
+  function unlock(){
+    lockScreen.hidden = true; setupContent.hidden = false;
+    fillAcctEditor(); ssSet("esi_unlocked","1");
+  }
+  function tryUnlock(){
+    if (cfgPass.value === CFG_PASSWORD){ lockErr.textContent = ""; cfgPass.value = ""; unlock(); }
+    else { lockErr.textContent = "Incorrect password."; }
+  }
+  unlockBtn.addEventListener("click", tryUnlock);
+  cfgPass.addEventListener("keydown", function(e){ if (e.key === "Enter"){ e.preventDefault(); tryUnlock(); } });
+  if (ssGet("esi_unlocked") === "1") unlock();
+
+  // ── Account editor (manual fallback + refresh) ───────────────────────
+  function fillAcctEditor(){ acctList.value = ACCOUNTS.join("\n"); updateAcctCount(); }
+  function parseAcctLines(){
+    var seen = {}, out = [];
+    acctList.value.split(/\r?\n/).forEach(function(line){
+      var v = line.trim();
+      if (v && !seen[v.toLowerCase()]){ seen[v.toLowerCase()] = 1; out.push(v); }
+    });
+    return out;
+  }
+  function updateAcctCount(){
+    var n = parseAcctLines().length;
+    acctCount.textContent = n + " account" + (n === 1 ? "" : "s") + " loaded";
+  }
+  function flash(btn, txt){ var t = btn.textContent; btn.textContent = txt; setTimeout(function(){ btn.textContent = t; }, 1300); }
+  acctList.addEventListener("input", updateAcctCount);
+
+  refreshAccts.addEventListener("click", function(){
+    setAcctSource("Refreshing from sheet…"); loadAccountsFromSheet(true);
+  });
+  // Pin a local list — used only when the sheet can't be reached
+  saveAccts.addEventListener("click", function(){
+    var list = parseAcctLines();
+    if (!list.length){ flash(saveAccts, "Need ≥ 1"); return; }
+    lsSet(ACCT_OVERRIDE, JSON.stringify(list));
+    ACCOUNTS = list; populateAccounts(); refreshSubmit();
+    setAcctSource(ACCOUNTS.length + " accounts · manual fallback (pinned)");
+    flash(saveAccts, "Pinned ✓");
+  });
+  // Clear the pin and go back to the live sheet list
+  resetAccts.addEventListener("click", function(){
+    try{ window.localStorage.removeItem(ACCT_OVERRIDE); }catch(e){}
+    flash(resetAccts, "Cleared ✓");
+    setAcctSource("Refreshing from sheet…"); loadAccountsFromSheet(true);
+  });
+
+  // parsed state
+  var parsed = null; // { validRows:[{url,page_type}], badRows:[{row,reason}], total, headerOk, fileName, fileSize }
+
+  // ── CSV parser (handles quotes, commas, CRLF) ────────────────────────
+  function parseCSV(text){
+    var rows = [], row = [], cur = "", i = 0, inQ = false, c;
+    // strip BOM
+    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+    while (i < text.length){
+      c = text[i];
+      if (inQ){
+        if (c === '"'){
+          if (text[i+1] === '"'){ cur += '"'; i += 2; continue; }
+          inQ = false; i++; continue;
+        }
+        cur += c; i++; continue;
+      }
+      if (c === '"'){ inQ = true; i++; continue; }
+      if (c === ','){ row.push(cur); cur = ""; i++; continue; }
+      if (c === '\r'){ i++; continue; }
+      if (c === '\n'){ row.push(cur); rows.push(row); row = []; cur = ""; i++; continue; }
+      cur += c; i++;
+    }
+    if (cur.length || row.length){ row.push(cur); rows.push(row); }
+    // drop fully-empty trailing rows
+    return rows.filter(function(r){ return r.some(function(v){ return String(v).trim() !== ""; }); });
+  }
+
+  function normalize(s){ return String(s || "").trim().toLowerCase().replace(/\s+/g," "); }
+
+  function looksLikeUrl(v){
+    v = String(v || "").trim();
+    if (!v) return false;
+    if (/^https?:\/\/\S+$/i.test(v)) return true;   // absolute URL
+    if (/^\/\S*/.test(v)) return true;              // root-relative path
+    if (/^[\w.-]+\.[a-z]{2,}(\/\S*)?$/i.test(v)) return true; // bare domain/path
+    return false;
+  }
+
+  // ── Validate an uploaded file ────────────────────────────────────────
+  function handleFile(file){
+    resetResults();
+    if (!file) return;
+
+    var nameOk = /\.csv$/i.test(file.name);
+    var reader = new FileReader();
+    reader.onload = function(e){
+      var text = e.target.result;
+      var grid = parseCSV(text);
+
+      var out = {
+        validRows: [], badRows: [], total: 0,
+        headerOk: false, urlCol: -1, typeCol: -1,
+        fileName: file.name, fileSize: file.size, extOk: nameOk,
+        empty: false
+      };
+
+      if (!grid.length){ out.empty = true; parsed = null; renderResults(out); return; }
+
+      var header = grid[0].map(normalize);
+      // flexible header matching
+      var urlAliases  = ["page url","url","page","page_url","pageurl"];
+      var typeAliases = ["type","page type","page_type","pagetype"];
+      out.urlCol  = header.findIndex(function(h){ return urlAliases.indexOf(h) !== -1; });
+      out.typeCol = header.findIndex(function(h){ return typeAliases.indexOf(h) !== -1; });
+      out.headerOk = (out.urlCol !== -1 && out.typeCol !== -1);
+
+      if (out.headerOk){
+        for (var r = 1; r < grid.length; r++){
+          var line = grid[r];
+          out.total++;
+          var url  = (line[out.urlCol]  || "").trim();
+          var type = (line[out.typeCol] || "").trim();
+          var reason = null;
+          if (!url && !type)      reason = "empty row";
+          else if (!url)          reason = "missing Page URL";
+          else if (!type)         reason = "missing Type";
+          else if (!looksLikeUrl(url)) reason = "Page URL doesn't look valid";
+          if (reason){ out.badRows.push({ n: r+1, reason: reason, url: url, type: type }); }
+          else        { out.validRows.push({ url: url, page_type: type }); }
+        }
+      }
+
+      parsed = out.headerOk && out.validRows.length ? out : null;
+      renderResults(out);
+    };
+    reader.onerror = function(){
+      renderResults({ readError:true, fileName:file.name });
+      parsed = null;
+    };
+    reader.readAsText(file);
+
+    // show file chip immediately
+    fileChip.innerHTML =
+      '<div class="filechip"><div><div class="name">'+escapeHtml(file.name)+'</div>'+
+      '<div class="meta">'+fmtBytes(file.size)+'</div></div>'+
+      '<button class="linkbtn" id="clearFile">remove</button></div>';
+    $("clearFile").addEventListener("click", function(ev){
+      ev.stopPropagation();
+      fileInput.value = ""; fileChip.innerHTML = ""; resetResults(); parsed = null; refreshSubmit();
+    });
+  }
+
+  // ── Render result indicators ─────────────────────────────────────────
+  function renderResults(out){
+    results.style.display = "block";
+    var chips = [], msgs = [];
+
+    if (out.readError){
+      chips.push(chip("err","Could not read file"));
+      msgs.push(msg("err","✕","Browser could not read this file. Try re-exporting the CSV."));
+      results.innerHTML = wrap(chips, msgs, "");
+      refreshSubmit(); return;
+    }
+
+    // file extension
+    if (out.extOk) { chips.push(chip("ok","CSV file")); }
+    else { chips.push(chip("warn","Not a .csv extension")); msgs.push(msg("warn","!","File isn't named .csv — parsed anyway, but verify the format.")); }
+
+    if (out.empty){
+      chips.push(chip("err","File is empty"));
+      msgs.push(msg("err","✕","No rows found in the file."));
+      results.innerHTML = wrap(chips, msgs, "");
+      refreshSubmit(); return;
+    }
+
+    // header
+    if (out.headerOk){
+      chips.push(chip("ok","Headers detected"));
+      msgs.push(msg("ok","✓","Found required columns: Page URL and Type. (Added On Date is ignored.)"));
+    } else {
+      chips.push(chip("err","Missing required columns"));
+      var need = [];
+      if (out.urlCol === -1)  need.push("Page URL");
+      if (out.typeCol === -1) need.push("Type");
+      msgs.push(msg("err","✕","Couldn't find column(s): "+need.join(" and ")+". Check the header row."));
+      results.innerHTML = wrap(chips, msgs, "");
+      refreshSubmit(); return;
+    }
+
+    // row counts
+    chips.push(chip(out.validRows.length ? "ok" : "err", out.validRows.length+" valid row"+(out.validRows.length===1?"":"s")));
+    if (out.badRows.length) chips.push(chip("warn", out.badRows.length+" skipped"));
+
+    if (out.validRows.length){
+      msgs.push(msg("ok","✓", out.validRows.length+" row"+(out.validRows.length===1?"":"s")+" ready to submit."));
+    } else {
+      msgs.push(msg("err","✕","No valid rows to submit."));
+    }
+    out.badRows.slice(0,6).forEach(function(b){
+      msgs.push(msg("warn","!","Row "+b.n+": "+b.reason+"."));
+    });
+    if (out.badRows.length > 6){
+      msgs.push(msg("warn","!","…and "+(out.badRows.length-6)+" more skipped row"+((out.badRows.length-6)===1?"":"s")+"."));
+    }
+
+    // preview table
+    var preview = "";
+    var show = out.validRows.slice(0,8);
+    if (show.length){
+      var body = show.map(function(r){
+        return "<tr><td class='url'>"+escapeHtml(r.url)+"</td><td>"+escapeHtml(r.page_type)+"</td></tr>";
+      }).join("");
+      var more = out.validRows.length > 8
+        ? "<div class='morerows'>+ "+(out.validRows.length-8)+" more valid row"+((out.validRows.length-8)===1?"":"s")+"</div>"
+        : "";
+      preview =
+        "<div class='previewwrap'><div class='previewhead'>Preview — url → page_type</div>"+
+        "<table><thead><tr><th>url</th><th>page_type</th></tr></thead><tbody>"+body+"</tbody></table>"+more+"</div>";
+    }
+
+    results.innerHTML = wrap(chips, msgs, preview);
+    refreshSubmit();
+  }
+
+  function wrap(chips, msgs, preview){
+    return "<div class='chips'>"+chips.join("")+"</div>"+
+           "<ul class='msgs'>"+msgs.join("")+"</ul>"+preview;
+  }
+  function chip(kind,label){ return "<span class='chip "+kind+"'><span class='dot'></span>"+escapeHtml(label)+"</span>"; }
+  function msg(kind,mark,text){ return "<li class='m-"+kind+"'><span class='mark'>"+mark+"</span><span>"+escapeHtml(text)+"</span></li>"; }
+
+  function resetResults(){ results.style.display = "none"; results.innerHTML = ""; }
+
+  // ── Submit gating ────────────────────────────────────────────────────
+  function refreshSubmit(){
+    var ready = !!accountSel.value && modelInput.value.trim().length > 0 && parsed && parsed.validRows.length > 0;
+    submitBtn.disabled = !ready;
+  }
+  accountSel.addEventListener("change", refreshSubmit);
+  modelInput.addEventListener("input", refreshSubmit);
+
+  // ── File input wiring ────────────────────────────────────────────────
+  drop.addEventListener("click", function(){ fileInput.click(); });
+  fileInput.addEventListener("change", function(e){ handleFile(e.target.files[0]); });
+  ["dragenter","dragover"].forEach(function(ev){
+    drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.add("dragging"); });
+  });
+  ["dragleave","drop"].forEach(function(ev){
+    drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.remove("dragging"); });
+  });
+  drop.addEventListener("drop", function(e){
+    var f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f){ fileInput.files = e.dataTransfer.files; handleFile(f); }
+  });
+
+  // ── Submit to Apps Script ────────────────────────────────────────────
+  submitBtn.addEventListener("click", function(){
+    var url = (webAppUrl.value || "").trim();
+    if (!url){
+      $("configPanel").open = true;
+      setStatus("fail","Add your Apps Script Web App URL in Setup below.");
+      webAppUrl.focus();
+      return;
+    }
+    if (!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec/.test(url)){
+      setStatus("fail","That URL doesn't look like a Web App /exec deployment.");
+      return;
+    }
+
+    var payload = {
+      account_name: accountSel.value,
+      model_name:   modelInput.value.trim(),
+      rows:         parsed.validRows
+    };
+
+    submitBtn.disabled = true;
+    setStatus("sending", "<span class='spinner'></span>Sending "+parsed.validRows.length+" row"+(parsed.validRows.length===1?"":"s")+" to raw_sheet…");
+
+    // text/plain avoids a CORS preflight; no-cors lets the write succeed
+    // even though Apps Script can't return CORS headers.
+    fetch(url, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    }).then(function(){
+      setStatus("done", "✓ Submitted "+parsed.validRows.length+" row"+(parsed.validRows.length===1?"":"s")+" — verify in the tracker’s raw_sheet.");
+      // reset for next batch, keep account + url
+      modelInput.value = "";
+      fileInput.value = ""; fileChip.innerHTML = ""; resetResults(); parsed = null;
+      refreshSubmit();
+    }).catch(function(err){
+      setStatus("fail", "✕ Network error — could not reach the endpoint. Check the URL and deployment access.");
+      submitBtn.disabled = false;
+    });
+  });
+
+  function setStatus(kind, html){
+    statusEl.className = "status " + kind;
+    statusEl.innerHTML = html;
+  }
+
+  // ── Copy Apps Script ─────────────────────────────────────────────────
+  $("copyCode").addEventListener("click", function(){
+    var code = $("gasCode").textContent;
+    navigator.clipboard.writeText(code).then(function(){
+      var b = $("copyCode"); var t = b.textContent;
+      b.textContent = "Copied ✓";
+      setTimeout(function(){ b.textContent = t; }, 1400);
+    }).catch(function(){
+      var b = $("copyCode"); b.textContent = "Copy failed";
+    });
+  });
+
+  // ── helpers ──────────────────────────────────────────────────────────
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(m){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];
+    });
+  }
+  function fmtBytes(b){
+    if (b < 1024) return b + " B";
+    if (b < 1048576) return (b/1024).toFixed(1) + " KB";
+    return (b/1048576).toFixed(1) + " MB";
+  }
+})();
+</script>
+</body>
+</html>
